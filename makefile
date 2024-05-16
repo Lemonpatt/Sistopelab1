@@ -9,7 +9,7 @@ Bmp.o: Bmp.c Bmp.h
 Filtros.o: Filtros.c Filtros.h
 			g++ -g -c Filtros.c
 
-lab1: Crear_archivos.o Bmp.o Filtros.o main.c
+lab1: Crear_archivos.o Bmp.o Filtros.o lab1.c
 	g++ -g Crear_archivos.o Bmp.o Filtros.o lab1.c -o lab1
 
 clean:
