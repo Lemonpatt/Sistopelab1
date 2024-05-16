@@ -1,0 +1,1 @@
+./main -N rb r -C resultados -R nearlyblack -p 1.1 -u 0.5 (umbral bajo 0.4 funciona para foto r)

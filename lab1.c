@@ -1,8 +1,10 @@
 #include "Filtros.h"
-
+#include "dirent.h"
 
 int main(int argc, char *argv[]) {
-    char *nombre_prefijo[3] = {NULL};
+
+    char *nombre_prefijo = NULL;
+    char *nombre_imagenes[100] = {NULL};
     int cantidad_filtros = 0;
     double factor_saturacion = 1.0;
     double umbral_binarizacion = -1.0;
@@ -17,23 +19,10 @@ int main(int argc, char *argv[]) {
         switch (opt) {
 
             case 'N':
-                //Nos aseguramos que reciba un máximo de 3 imágenes
-                // Procesar múltiples nombres de archivo después de '-N'
-                while (cantidad_imagenes < 4) {
-                    if (argv[optind-1][0] == '-'){
-                        optind--;
-                        break;
-                    }
-                    nombre_prefijo[cantidad_imagenes] = strdup(argv[optind-1]);
-                    cantidad_imagenes++;
-                    if (cantidad_imagenes == 4){
-                        fprintf(stderr, "La cantidad maxima de imagenes es 3.\n");
-                        exit(EXIT_FAILURE);
-                    }
-                    optind++;
-
-                }
+                //Nos aseguramos que reciba solamente uno de los 3 prefijos permitidos
+                nombre_prefijo = optarg;
                 break;
+
             case 'f':
                 cantidad_filtros = atoi(optarg);
                 if (cantidad_filtros < 1 || cantidad_filtros > 3) {
@@ -46,8 +35,8 @@ int main(int argc, char *argv[]) {
                 factor_saturacion = atof(optarg);
 
                 //Limite del factor de saturación?
-                if (factor_saturacion < -2.0 || factor_saturacion > 2.0) {
-                    fprintf(stderr, "El factor de saturación debe estar entre -2 y 2??.\n");
+                if (factor_saturacion < 0.0) {
+                    fprintf(stderr, "El factor de saturación debe ser positivo.\n");
                     exit(EXIT_FAILURE);
                 }
                 break;
@@ -83,8 +72,55 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    //Nos aseguramos que reciba solamente uno de los 3 prefijos permitidos o que haya uno al menos
+    if (nombre_prefijo == NULL){
+        fprintf(stderr, "Debe incluir el prefijo de las imagenes a procesar (-N).\n");
+        exit(EXIT_FAILURE);   
+    
+    }
+    if (strcmp(nombre_prefijo, "imagen") && strcmp(nombre_prefijo, "img") && strcmp(nombre_prefijo, "photo")){
+        fprintf(stderr, "El parametro para el prefijo debe ser imagen, img o photo.\n");
+        exit(EXIT_FAILURE);   
+    
+    }
+
+     // Abrir el directorio actual
+    DIR *dir = opendir(".");
+    if (dir == NULL) {
+        perror("Error al abrir el directorio actual");
+        exit(EXIT_FAILURE);
+    }
+
+    struct dirent *entry;
+    int sufijo = 1;
+    while ((entry = readdir(dir)) != NULL) {
+        // Verificar si es un directorio y si comienza con el prefijo deseado
+        if (strncmp(entry->d_name, nombre_prefijo, strlen(nombre_prefijo)) == 0) {
+            // Verificar si el nombre de la carpeta tiene el formato adecuado (prefijo_sufijo)
+            const char *num_str = entry->d_name + strlen(nombre_prefijo);  // Apuntar al número después del prefijo
+            if (sscanf(num_str, "_%d", &sufijo) == 1){
+                // Es una imagen con el formato adecuado, guardar el nombre
+                 // Copiar el nombre de la imagen sin la extensión (.bmp)
+                char *nombre_sin_extension = (char *)malloc(strlen(entry->d_name) - 4);  // Reservar memoria para el nuevo nombre
+                strncpy(nombre_sin_extension, entry->d_name, strlen(entry->d_name) - 4);
+                printf("nombre guardado: %s\n ", nombre_sin_extension);
+                nombre_imagenes[cantidad_imagenes] = nombre_sin_extension;
+                cantidad_imagenes++;
+
+            }
+            // Verificar si se alcanzó el máximo de nombres a guardar
+            if (cantidad_imagenes == 100) {
+                fprintf(stderr, "Advertencia: se ha alcanzado el límite máximo de nombres de imagenes a procesar.\n");
+                    break;
+                }
+            sufijo++;
+        }
+        
+    }
+
+
     // Verificar si se proporcionaron todos los parámetros obligatorios
-    if (nombre_prefijo[0] == NULL) {
+    if (nombre_imagenes[0] == NULL) {
         fprintf(stderr, "No se puede realizar la ejecución sin una imagen.\n");
         exit(EXIT_FAILURE);
     }
@@ -125,10 +161,10 @@ int main(int argc, char *argv[]) {
     int i = 0;
     FILE *csv = NULL;
     int resultadoNB;
-    while(nombre_prefijo[i] != NULL){
+    while(cantidad_imagenes > i){
 
         char nombre_imagen[400];
-        sprintf(nombre_imagen, "%s.bmp", nombre_prefijo[i]);
+        sprintf(nombre_imagen, "%s.bmp", nombre_imagenes[i]);
         
         printf("Imagen siendo procesada: %s\n", nombre_imagen);
 
@@ -143,105 +179,51 @@ int main(int argc, char *argv[]) {
         printf("Alto de la imagen: %d\n", image->height);
 
         //Otorgamos el filepath al nombre para escribirlo alli
-        sprintf(nombre_imagen, "%s/%s_Saturated.bmp", nombre_carpeta, nombre_prefijo[i]);
+        sprintf(nombre_imagen, "%s/%s_Saturated.bmp", nombre_carpeta, nombre_imagenes[i]);
 
         BMPImage* new_image = saturate_bmp(image, factor_saturacion);
         write_bmp(nombre_imagen, new_image);
 
+
+        csv = fopen(nombre_archivo_csv, "a");
+
         //Revisamos si se hacen los siguientes filtros
         if (cantidad_filtros > 1){
-            sprintf(nombre_imagen, "%s/%s_Gris.bmp", nombre_carpeta, nombre_prefijo[i]);
+            sprintf(nombre_imagen, "%s/%s_Gris.bmp", nombre_carpeta, nombre_imagenes[i]);
             BMPImage* new_imageG = greyScale_bmp(image);
             write_bmp(nombre_imagen, new_imageG);
 
             if (cantidad_filtros == 3){
                 
-                sprintf(nombre_imagen, "%s/%s_Binario.bmp", nombre_carpeta, nombre_prefijo[i]);
+                sprintf(nombre_imagen, "%s/%s_Binario.bmp", nombre_carpeta, nombre_imagenes[i]);
                 BMPImage* new_imageB = Binarizar_bmp(new_imageG, umbral_binarizacion);
                 write_bmp(nombre_imagen, new_imageB);
 
-
-                csv = fopen(nombre_archivo_csv, "a");
                 resultadoNB = nearly_black(new_imageB, umbral_clasificacion);
-                fprintf(csv, "%s-Binarizada; %d\n", nombre_prefijo[i], resultadoNB);
-                if (i == cantidad_imagenes-1){
-                    free_bmp(new_imageB);
-                }
+                fprintf(csv, "%s-Binarizada; %d\n", nombre_imagenes[i], resultadoNB);
+                csv = NULL;
+                free_bmp(new_imageB);
             }
             //Se ve nearly black solo si no se ha hecho todavia
-            if (csv == NULL){
-                csv = fopen(nombre_archivo_csv, "a");
+            if (csv != NULL){
                 resultadoNB = nearly_black(new_imageG, umbral_clasificacion);
-                fprintf(csv, "%s-Gris; %d\n", nombre_prefijo[i], resultadoNB);
+                fprintf(csv, "%s-Gris; %d\n", nombre_imagenes[i], resultadoNB);
+                csv = NULL;
             }
+            free_bmp(new_imageG);
 
-            if (i == cantidad_imagenes-1){
-                free_bmp(new_imageG);
-            }
         }
-
-        if (csv == NULL){
-            csv = fopen(nombre_archivo_csv, "a");
+        if (csv != NULL){
             resultadoNB = nearly_black(new_image, umbral_clasificacion);
-            fprintf(csv, "%s-Saturada; %d\n", nombre_prefijo[i], resultadoNB);
+            fprintf(csv, "%s-Saturada; %d\n", nombre_imagenes[i], resultadoNB);
+            csv = NULL;
         }
-        fclose(csv);
 
-        if (i == cantidad_imagenes-1)
-        {
-            free_bmp(image);
-            free_bmp(new_image);
-        }
+        free_bmp(image);
+        free_bmp(new_image);
+
         i++;
+
     }
     return 0;
 }
-    
-
-    /*
-    const char* filename = "rb.bmp";
-    BMPImage* image = read_bmp(filename);
-    if (!image) {
-        return 1;
-    }
-
-    printf("Ancho de la imagen: %d\n", image->width);
-    printf("Alto de la imagen: %d\n", image->height);
-
-    // Acceder a los píxeles de la imagen
-    for (int y = 0; y < image->height; y++) {
-        for (int x = 0; x < image->width; x++) {
-            RGBPixel pixel = image->data[y * image->width + x];
-            printf("Pixel (%d, %d): R=%d, G=%d, B=%d\n", x, y, pixel.r, pixel.g, pixel.b);
-        }
-    }
-
-    BMPImage* new_image = saturate_bmp(image, 1.1f);
-    write_bmp("saturated.bmp", new_image);
-
-    BMPImage* new_imageG = greyScale_bmp(image);
-    write_bmp("Gris.bmp", new_imageG);
-
-    BMPImage* new_imageB = Binarizar_bmp(new_imageG, 0.3);
-    write_bmp("Binario.bmp", new_imageB);
-
-    free_bmp(image);
-    free_bmp(new_image);
-    free_bmp(new_imageG);
-    free_bmp(new_imageB);
-    return 0;
-}
-
-
-
-/*
-
-
-
-/*
-
-
-
-*/
-
-
