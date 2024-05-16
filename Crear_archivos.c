@@ -1,8 +1,9 @@
 
 #include "Crear_archivos.h"
 
-//documentacion dsps
-//Función que crea una carpeta y la reemplaza si ya existe
+//Entradas: Recibe un char*
+//Salidas: Retorna vacio
+//Descripcion: Esta funcion crea una carpeta nombrada como el char* de la entrada, en caso de que ya exista esa carpeta, la reemplaza
 void make_folder(char *folder_name){
 
     int i = 0;
@@ -33,6 +34,9 @@ void make_folder(char *folder_name){
     }
 }
 
+//Entradas: Recibe un char* y un numero float
+//Salidas: Retorna vacio
+//Descripcion: Esta funcion crea un archivo csv que se llama como el char* que recibe y muestra el umbral que es el float que recibe
 void make_csv(char *csv_name, float umbral){
 
     int i = 0;
@@ -61,7 +65,7 @@ void make_csv(char *csv_name, float umbral){
 
         //Solo llega aqui si encontro que el csv ya existia
         i++;
-        
+
     }
 
 }

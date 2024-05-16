@@ -1,7 +1,8 @@
 #include"Bmp.h"
 
-
-
+//Entradas: Recibe un const char* que funciona como un "String"
+//Salida: Retorna un puntero a BMPImage
+//Descripcion: Funcion para leer una imagen de formato BMP
 BMPImage* read_bmp(const char* filename) {
     FILE* file = fopen(filename, "rb"); //rb = read binary
     if (!file) {
@@ -42,6 +43,9 @@ BMPImage* read_bmp(const char* filename) {
     return image;
 }
 
+//Entradas: Un puntero a BMPImage
+//Salidas: Retorna vacio
+//Descripcion: funcion encargada de liberar memoria de una imagen
 void free_bmp(BMPImage* image) {
     if (image) {
         free(image->data);
@@ -49,8 +53,9 @@ void free_bmp(BMPImage* image) {
     }
 }
 
-
-//funcion para guardar la imagen en un archivo
+//Entradas: Recibe Un const char* que funciona como "String" y un puntero a BMPImage
+//Salidas: Retorna vacio
+//Descripcion: Esta funcion guarda la imagen que recibe en un archivo llamado como el const char* que recibe
 void write_bmp(const char* filename, BMPImage* image){
     
     FILE* file = fopen(filename, "wb"); //wb = write binary

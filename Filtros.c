@@ -1,8 +1,9 @@
 #include"Filtros.h"
 
 
-
-//funcion para saturar los colores de la imagen, solo se multiplica el rgb por un factor
+//Entradas: Recibe una BMPImage* y un numero float( >= 0)
+//Salidas: Retorna una BMPImage*
+//Descripcion: Funcion que satura los colores de la imagen multiplicando los colores por el float
 BMPImage* saturate_bmp(BMPImage* image, float factor) {
     BMPImage* new_image = (BMPImage*)malloc(sizeof(BMPImage));
     new_image->width = image->width;
@@ -22,6 +23,9 @@ BMPImage* saturate_bmp(BMPImage* image, float factor) {
     return new_image;
 }
 
+//Entradas: Recibe una BMPImage*
+//Salidas: Retorna una BMPImage*
+//Descripcion: Funcion que convierte una imagen a su version en escala de grises
 BMPImage* greyScale_bmp(BMPImage* image){
     BMPImage* new_image = (BMPImage*)malloc(sizeof(BMPImage));
     new_image->width = image->width;
@@ -41,6 +45,9 @@ BMPImage* greyScale_bmp(BMPImage* image){
     return new_image;
 }
 
+//Entradas: Recibe una BMPImage* y un numero flotante (entre 0 y 1)
+//Salidas: Retorna una BMPImage*
+//Descripcion: Funcion que Binariza una imagen(la convierte en una imagen blanco y negro)
 BMPImage* Binarizar_bmp(BMPImage* image, float umbral) {
     BMPImage* new_image = (BMPImage*)malloc(sizeof(BMPImage));
     new_image->width = image->width;
@@ -76,6 +83,9 @@ BMPImage* Binarizar_bmp(BMPImage* image, float umbral) {
     return new_image;
 }
 
+//Entradas:Recibe una BMPImage* y un numero flotante (entre 0 y 1)
+//Salidas: Retorna un numero entero
+//Descripcion: Funcion que revisa si una imagen es "casi negra" basandose en el umbral (numero flotante) recibido
 int nearly_black(BMPImage * image, float umbral){
     float n_pixels = image->height * image->width;
     float contador = 0;
