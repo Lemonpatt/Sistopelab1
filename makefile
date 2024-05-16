@@ -1,4 +1,4 @@
-all: Crear_archivos.o Bmp.o Filtros.o main
+all: Crear_archivos.o Bmp.o Filtros.o lab1
 
 Crear_archivos.o: Crear_archivos.c Crear_archivos.h
 			g++ -g -c Crear_archivos.c
@@ -9,9 +9,9 @@ Bmp.o: Bmp.c Bmp.h
 Filtros.o: Filtros.c Filtros.h
 			g++ -g -c Filtros.c
 
-main: Crear_archivos.o Bmp.o Filtros.o main.c
-	g++ -g Crear_archivos.o Bmp.o Filtros.o main.c -o main
+lab1: Crear_archivos.o Bmp.o Filtros.o main.c
+	g++ -g Crear_archivos.o Bmp.o Filtros.o lab1.c -o lab1
 
 clean:
-	rm -f *.o Crear_archivos Bmp Filtros main
+	rm -f *.o Crear_archivos Bmp Filtros lab1
 
